@@ -1,0 +1,12 @@
+item { 
+	name:'check'
+	id:1
+}
+item { 
+	name:'waiting'
+	id:2
+}
+item { 
+	name:'writing'
+	id:3
+}
