@@ -22,8 +22,10 @@ _score_thresh = 0.20
 # MODEL_NAME = 'hand_inference_graph2'
 # overwrite2:
 # MODEL_NAME = 'hand_inference_graph3'
-# overwrite1:
-MODEL_NAME = 'hand_inference_graph4'
+# overwrite3:
+# MODEL_NAME = 'hand_inference_graph41'
+# overwrite4:
+MODEL_NAME = 'hand_inference_graph5'
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
 PATH_TO_CKPT = MODEL_NAME + '/frozen_inference_graph.pb'
 # List of the strings that is used to add correct label for each box.
@@ -35,7 +37,7 @@ PATH_TO_LABELS = os.path.join(MODEL_NAME, 'hand_label_map.pbtxt')
 # overwrite2:
 # NUM_CLASSES = 3
 # overwrite3:
-NUM_CLASSES = 5
+NUM_CLASSES = 7
 # load label map
 label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
 categories = label_map_util.convert_label_map_to_categories(
@@ -47,7 +49,7 @@ category_index = label_map_util.create_category_index(categories)
 # overwrite2:
 # hand_classes = {1:'checking', 2:'waiting', 3:'writing'}
 # overwrite3:
-hand_classes = {1:'back', 2:'check', 3:'stop', 4:'wait', 5:'write'}
+hand_classes = {1:'back', 2:'check', 3:'stop', 4:'wait', 5:'write1', 6:'write2', 7:'write3'}
 
 # Load a frozen infrerence graph into memory
 def load_inference_graph():

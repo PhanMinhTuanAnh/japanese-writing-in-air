@@ -25,5 +25,5 @@ def load_hiragana_model():
     return hiragana
 
 def load_kanji_model():
-    hiragana = tf.keras.models.load_model("ji-trained-models/kanji9B(0).h5")
+    hiragana = tf.keras.models.load_model("ji-trained-models/kanji9B.h5")
     return hiragana

@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     #################################################################
     pixelDraw = 8
-
+    pre_predict = -1
 
     while True:
         # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
@@ -106,18 +106,25 @@ if __name__ == '__main__':
         # DRAWWWW
         (left, right, top, bottom) = (boxes[0][1] * im_width, boxes[0][3] * im_width,
                                           boxes[0][0] * im_height, boxes[0][2] * im_height)
-        p = np.array([np.float32(left+(right-left)/8), np.float32(top+(bottom-top)/8)])
-        ptemp = np.array([np.float32(left+(right-left)/8), np.float32(top+(bottom-top)/8)]) # thằng này không đổi để chờ hội tụ
-        coor = (int(left+(right-left)/8),int(top+(top-bottom)/8))
         
 
-        if classes[0] == 5 and scores[0] > args.score_thresh:
+        if (classes[0] == 5 or classes[0] == 6 or classes[0] == 7) and scores[0] > args.score_thresh:
             ## kalman #####################################################
+            p = np.array([np.float32(left+(right-left)/8), np.float32(top+(bottom-top)/8)])
+            ptemp = np.array([np.float32(left+(right-left)/8), np.float32(top+(bottom-top)/8)]) # thằng này không đổi để chờ hội tụ
+            coor = (int(left+(right-left)/8),int(top+(top-bottom)/8))
             isBacked = True
             kalman.correct(p)
             p = kalman.predict()
             # print(p)
-
+            if(classes[0] == 7 and (pre_predict == 5 or pre_predict == 6)): # kiểu thứ 3 đầu ngón qua bên phải
+                p = np.array([np.float32(left+(right-left)/8*7), np.float32(top+(bottom-top)/8)])
+                ptemp = np.array([np.float32(left+(right-left)/8*7), np.float32(top+(bottom-top)/8)]) # thằng này không đổi để chờ hội tụ
+                coor = (int(left+(right-left)/8*7),int(top+(top-bottom)/8))
+                while(abs(int(p[0])-coor[0]) > 0.1 and abs(int(p[1])-coor[1]) > 0.1):
+                    arrayDrawed.append((int(p[0]),int(p[1])))
+                    kalman.correct(ptemp)
+                    p = kalman.predict()
             while(abs(int(p[0])-coor[0]) > 0.1 and abs(int(p[1])-coor[1]) > 0.1 and check == False):
                 kalman.correct(ptemp)
                 p = kalman.predict()
@@ -193,6 +200,8 @@ if __name__ == '__main__':
                 if(len(modifiedPoints) > 0): # if empty không cần pop
                     modifiedPoints.pop(-1)
                 isBacked = False
+
+        pre_predict = classes[0]
 
         # print(modifiedPoints)
         
