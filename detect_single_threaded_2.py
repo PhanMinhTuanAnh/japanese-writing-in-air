@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-sth', '--scorethreshold', dest='score_thresh', type=float,
-                        default=0.8, help='Score threshold for displaying bounding boxes')
+                        default=0.4, help='Score threshold for displaying bounding boxes')
     parser.add_argument('-fps', '--fps', dest='fps', type=int,
                         default=1, help='Show FPS on detection/display visualization')
     parser.add_argument('-src', '--source', dest='video_source',
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     start_time = datetime.datetime.now()
     num_frames = 0
     im_width, im_height = (cap.get(3), cap.get(4))
-    num_hands_detect = 1
+    num_hands_detect = 3
 
     cv2.namedWindow('Single-Threaded Detection', cv2.WINDOW_NORMAL)
 
@@ -84,9 +84,11 @@ if __name__ == '__main__':
     b = 0
 
     #################################################################
-    pixelDraw = 8
+    pixelDraw = 5
     pre_predict = -1
 
+    is_start_time_back = -1 # tính giờ cho back nếu lớn hơn 1,5s xóa hết
+    is_start_time_write = -1
     while True:
         # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
         ret, image_np = cap.read()
@@ -109,6 +111,7 @@ if __name__ == '__main__':
         
 
         if (classes[0] == 5 or classes[0] == 6 or classes[0] == 7) and scores[0] > args.score_thresh:
+            is_start_time_back = -1
             ## kalman #####################################################
             p = np.array([np.float32(left+(right-left)/8), np.float32(top+(bottom-top)/8)])
             ptemp = np.array([np.float32(left+(right-left)/8), np.float32(top+(bottom-top)/8)]) # thằng này không đổi để chờ hội tụ
@@ -117,33 +120,43 @@ if __name__ == '__main__':
             kalman.correct(p)
             p = kalman.predict()
             # print(p)
-            if(classes[0] == 7 and (pre_predict == 5 or pre_predict == 6)): # kiểu thứ 3 đầu ngón qua bên phải
-                p = np.array([np.float32(left+(right-left)/8*7), np.float32(top+(bottom-top)/8)])
-                ptemp = np.array([np.float32(left+(right-left)/8*7), np.float32(top+(bottom-top)/8)]) # thằng này không đổi để chờ hội tụ
-                coor = (int(left+(right-left)/8*7),int(top+(top-bottom)/8))
-                while(abs(int(p[0])-coor[0]) > 0.1 and abs(int(p[1])-coor[1]) > 0.1):
-                    arrayDrawed.append((int(p[0]),int(p[1])))
-                    kalman.correct(ptemp)
-                    p = kalman.predict()
+            # if(classes[0] == 7 and (pre_predict == 5 or pre_predict == 6)): # kiểu thứ 3 đầu ngón qua bên phải
+            #     p = np.array([np.float32(left+(right-left)/8*7), np.float32(top+(bottom-top)/8)])
+            #     ptemp = np.array([np.float32(left+(right-left)/8*7), np.float32(top+(bottom-top)/8)]) # thằng này không đổi để chờ hội tụ
+            #     coor = (int(left+(right-left)/8*7),int(top+(top-bottom)/8))
+            #     while(abs(int(p[0])-coor[0]) > 0.1 and abs(int(p[1])-coor[1]) > 0.1):
+            #         arrayDrawed.append((int(p[0]),int(p[1])))
+            #         kalman.correct(ptemp)
+            #         p = kalman.predict()
             while(abs(int(p[0])-coor[0]) > 0.1 and abs(int(p[1])-coor[1]) > 0.1 and check == False):
                 kalman.correct(ptemp)
                 p = kalman.predict()
 
             check = True
             cv2.line(image_np, (int(p[0]),int(p[1])), (int(p[0]),int(p[1])), (255, 255, 0), 30)
+            # if(is_start_time_write == -1):
+                # is_start_time_write = datetime.datetime.now()
+            # else:
+            #     if((datetime.datetime.now()-is_start_time_write).total_seconds()>1.5):
             arrayDrawed.append((int(p[0]),int(p[1])))
 
 
         elif classes[0] == 4 and scores[0] > args.score_thresh:
+            is_start_time_back = -1
+            is_start_time_write = -1
             check = False
             isBacked = True
             isFirstPoint = False
             countPassedPoint = 0
+
             if(len(arrayDrawed) > 0): # có thì mới add được
                 modifiedPoints.append(arrayDrawed)
             arrayDrawed = []
 
-        elif classes[0] == 3  and scores[0] > args.score_thresh:
+        elif ((classes[0] == 3 or classes[0] == 2)  and scores[0] > args.score_thresh): # check and stop
+
+            is_start_time_write = -1
+            is_start_time_back = -1
             check = False
             isBacked = True
             # print(l,r,t,b)
@@ -191,15 +204,21 @@ if __name__ == '__main__':
             # isStart = False
             # check = False
         elif classes[0] == 1  and scores[0] > args.score_thresh:
+            is_start_time_write = -1
             check = False
-            
-            if(isBacked == True):
-                if(len(arrayDrawed) > 0): # có thì mới add được # kiểm tra xem đã vẽ gì chưa để add vào trước khi xóa
-                    modifiedPoints.append(arrayDrawed)
-                    arrayDrawed = [] # pop rồi nhưng thằng này vẫn vẽ ??:D??
-                if(len(modifiedPoints) > 0): # if empty không cần pop
-                    modifiedPoints.pop(-1)
-                isBacked = False
+            if(is_start_time_back == -1): # nếu chưa back trước lần nào thì gán
+                is_start_time_back = datetime.datetime.now()
+                if(isBacked == True):
+                    if(len(arrayDrawed) > 0): # có thì mới add được # kiểm tra xem đã vẽ gì chưa để add vào trước khi xóa
+                        modifiedPoints.append(arrayDrawed)
+                        arrayDrawed = [] # pop rồi nhưng thằng này vẫn vẽ ??:D??
+                    if(len(modifiedPoints) > 0): # if empty không cần pop
+                        modifiedPoints.pop(-1)
+                    isBacked = False
+            else:
+                if((datetime.datetime.now()-is_start_time_back).total_seconds()>1.5):
+                    arrayDrawed = []
+                    modifiedPoints = []
 
         pre_predict = classes[0]
 

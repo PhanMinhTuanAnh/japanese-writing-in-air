@@ -11,9 +11,12 @@ def predict_all(img, hiragana_model=None, kanji_model=None, katakana_model=None)
         return None
     img = cv2.imread('img.jpg')
     img = cv2.resize(img,(48,48))
+    cv2.imwrite('img2.jpg', img)
     img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    cv2.imwrite('img3.jpg', img)
     img = img.reshape(1,48,48,1)
     img = np.array(img,dtype='float') / 255.0
+    print(img)
     # predicted_hiragana = np.argmax(hiragana_model.predict(img))
     # return predicted_hiragana
     predicted_kanji = np.argmax(kanji_model.predict(img))
