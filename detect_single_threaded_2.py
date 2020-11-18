@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-sth', '--scorethreshold', dest='score_thresh', type=float,
-                        default=0.4, help='Score threshold for displaying bounding boxes')
+                        default=0.8, help='Score threshold for displaying bounding boxes')
     parser.add_argument('-fps', '--fps', dest='fps', type=int,
                         default=1, help='Show FPS on detection/display visualization')
     parser.add_argument('-src', '--source', dest='video_source',
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     start_time = datetime.datetime.now()
     num_frames = 0
     im_width, im_height = (cap.get(3), cap.get(4))
-    num_hands_detect = 3
+    num_hands_detect = 1
 
     cv2.namedWindow('Single-Threaded Detection', cv2.WINDOW_NORMAL)
 
@@ -109,6 +109,7 @@ if __name__ == '__main__':
         (left, right, top, bottom) = (boxes[0][1] * im_width, boxes[0][3] * im_width,
                                           boxes[0][0] * im_height, boxes[0][2] * im_height)
         
+        cv2.putText(image_np, str(scores[0]), (30,30), cv2.FONT_HERSHEY_COMPLEX, 1, (0,255,222))
 
         if (classes[0] == 5 or classes[0] == 6 or classes[0] == 7) and scores[0] > args.score_thresh:
             is_start_time_back = -1
